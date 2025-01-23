@@ -1,0 +1,71 @@
+name: pr_check
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install protobuf and dep
+        run: sudo apt-get update -y && sudo apt-get install libwayland-dev libprotobuf-dev gcc-multilib clang libclang-dev protobuf-compiler -y
+      - name: Firefox
+        run: |
+          sudo snap remove firefox
+          sudo snap remove firefox-geckodriver
+          sudo install -d -m 0755 /etc/apt/keyrings
+          wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- | sudo tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" | sudo tee -a /etc/apt/sources.list.d/mozilla.list > /dev/null
+          echo '
+          Package: *
+          Pin: origin packages.mozilla.org
+          Pin-Priority: 1000
+          
+          Package: firefox*
+          Pin: release o=Ubuntu
+          Pin-Priority: -1' | sudo tee /etc/apt/preferences.d/mozilla
+          sudo apt update && sudo apt remove firefox
+          sudo apt install firefox
+      - name: Freeing up more disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android # will release about 10 GB if you don't need Android
+          sudo rm -rf /usr/share/dotnet # will release about 20GB if you don't need .NET
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      - name: Remove large packages
+        run: |
+          sudo apt-get remove -y '^aspnetcore-.*' > /dev/null
+          sudo apt-get remove -y '^dotnet-.*' > /dev/null
+          sudo apt-get remove -y 'php.*' > /dev/null
+          sudo apt-get remove -y '^mongodb-.*' > /dev/null
+          sudo apt-get remove -y '^mysql-.*' > /dev/null
+          sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri --fix-missing > /dev/null
+          sudo apt-get remove -y google-cloud-sdk --fix-missing > /dev/null
+          sudo apt-get remove -y google-cloud-cli --fix-missing > /dev/null
+          sudo apt-get autoremove -y > /dev/null
+          sudo apt-get clean > /dev/null
+      - name: Set up rust
+        run: rustup update && rustup default nightly && rustup target add wasm32-unknown-unknown
+      - name: Install wasm cli
+        run: cargo install wasm-bindgen-cli
+      - name: Clone and Build Node
+        run: git clone https://github.com/paritytech/polkadot-sdk-minimal-template && cd polkadot-sdk-minimal-template && cargo build --release
+      - name: Run node in background
+        run: ./polkadot-sdk-minimal-template/target/release/minimal-template-node --chain=local --rpc-port 9944 --alice --listen-addr /ip4/0.0.0.0/tcp/30334/ws &
+      - name: Install wasm-pack
+        run: sudo curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Run test
+        run: RUSTFLAGS=--cfg=web_sys_unstable_apis cargo test
+      - name: Run wasm test
+        run: |
+          cargo install geckodriver
+          /home/runner/.cargo/bin/wasm-pack test --firefox --headless

@@ -1,0 +1,10 @@
+[package]
+name = "test_action"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasm-bindgen = "0.2"
+subxt-lightclient = { version = "0.37.0", default-features = false, features = ["web"] }
+subxt = { version = "0.37.0", default-features = false, features = ["web", "jsonrpsee"] }
+wasm-bindgen-test = "0.3"
