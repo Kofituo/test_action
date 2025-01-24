@@ -59,6 +59,8 @@ jobs:
         run: sudo curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Run wasm test
+        env:
+          RUST_LOG: debug
         run: |
           cargo install geckodriver
           /home/runner/.cargo/bin/wasm-pack test --firefox --headless
