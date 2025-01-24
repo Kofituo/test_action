@@ -51,7 +51,7 @@ jobs:
         run: | 
          ./polkadot-sdk-minimal-template/target/release/minimal-template-node \
          --node-key=0000000000000000000000000000000000000000000000000000000000000001 \
-         --chain=../custom_spec.json \
+         --chain=./custom_spec.json \
          --rpc-port 9944 \
          --alice --listen-addr /ip4/0.0.0.0/tcp/30344/ws --public-addr /ip4/0.0.0.0/tcp/30336
 
