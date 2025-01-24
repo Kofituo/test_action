@@ -51,14 +51,16 @@ jobs:
         run: | 
          ./polkadot-sdk-minimal-template/target/release/minimal-template-node \
          --node-key=0000000000000000000000000000000000000000000000000000000000000001 \
-         --chain=../custom_spec.json \
+         --chain=custom_spec.json \
          --rpc-port 9944 \
-         --alice --listen-addr /ip4/0.0.0.0/tcp/30344/ws --public-addr /ip4/0.0.0.0/tcp/30336
+         --alice --listen-addr /ip4/0.0.0.0/tcp/30344/ws --public-addr /ip4/0.0.0.0/tcp/30336 &
 
       - name: Install wasm-pack
         run: sudo curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Run wasm test
+        env:
+          RUST_LOG: debug
         run: |
           cargo install geckodriver
           /home/runner/.cargo/bin/wasm-pack test --firefox --headless
