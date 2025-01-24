@@ -48,10 +48,16 @@ jobs:
       - name: Clone and Build Node
         run: git clone https://github.com/paritytech/polkadot-sdk-minimal-template && cd polkadot-sdk-minimal-template && cargo build --release
       - name: Run node in background
-        run: ./polkadot-sdk-minimal-template/target/release/minimal-template-node --dev --rpc-port 9944 --alice --listen-addr /ip4/0.0.0.0/tcp/30344/ws --public-addr /ip4/0.0.0.0/tcp/30336  &
+        run: | 
+         ./polkadot-sdk-minimal-template/target/release/minimal-template-node \
+         --node-key=0000000000000000000000000000000000000000000000000000000000000001 \
+         --chain=../custom_spec.json \
+         --rpc-port 9944 \
+         --alice --listen-addr /ip4/0.0.0.0/tcp/30344/ws --public-addr /ip4/0.0.0.0/tcp/30336
+
       - name: Install wasm-pack
         run: sudo curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-      
+
       - name: Run wasm test
         run: |
           cargo install geckodriver
